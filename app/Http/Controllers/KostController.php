@@ -16,8 +16,8 @@ class KostController extends Controller
     {
         $kost = Kost::findOrFail($id);
 
-        // URL halaman yang akan terbuka ketika barcode di-scan
-        $url = route('detailkost', $kost->id);
+        // URL khusus report view
+        $url = route('kost.report', $kost->id);
 
         // Generate QR SVG
         $qrSvg = QrCode::format('svg')->size(300)->generate($url);
@@ -28,13 +28,38 @@ class KostController extends Controller
         ]);
     }
 
+    public function showReport($id)
+    {
+        $kost = Kost::with(['fasilitas', 'images', 'user'])->findOrFail($id);
+        return view('kost.report', compact('kost'));
+    }
+
 
 
 
     public function detail($id)
     {
         $kost = Kost::with(['images', 'fasilitas'])->findOrFail($id);
-        return view('pages.detailkost', compact('kost'));
+        
+        $rekomendasi = Kost::with(['images', 'fasilitas'])
+            ->where('id', '!=', $id)
+            ->where('user_id', $kost->user_id)
+            ->inRandomOrder()
+            ->take(3)
+            ->get();
+            
+        // Jika rekomendasi kurang dari 3, ambil kost lain secara acak
+        if ($rekomendasi->count() < 3) {
+            $tambahan = Kost::with(['images', 'fasilitas'])
+                ->where('id', '!=', $id)
+                ->whereNotIn('id', $rekomendasi->pluck('id'))
+                ->inRandomOrder()
+                ->take(3 - $rekomendasi->count())
+                ->get();
+            $rekomendasi = $rekomendasi->merge($tambahan);
+        }
+            
+        return view('pages.detailkost', compact('kost', 'rekomendasi'));
     }
 
 
@@ -42,18 +67,39 @@ class KostController extends Controller
     {
         $about = \App\Models\AboutKami::first();
 
-        $items = \App\Models\Kost::with('images')
-            ->orderBy('jumlah_kamar', 'DESC')
-            ->take(3)
+        // Ambil 6 kost terbaru (netral)
+        $items = \App\Models\Kost::with(['images', 'user'])
+            ->latest()
+            ->take(6)
             ->get();
+        
+        $alur = \App\Models\AlurPendaftaran::all();
 
-        return view('pages.index', compact('about', 'items'));
+        return view('pages.index', compact('about', 'items', 'alur'));
     }
 
 
-    public function userKost()
+    public function userKost(Request $request)
     {
-        $items = Kost::with(['images', 'fasilitas'])->get();
+        $keyword = $request->keyword;
+        $query = Kost::with(['images', 'fasilitas']);
+        
+        if($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('nama_kost', 'LIKE', "%$keyword%")
+                    ->orWhere('nama_pemilik', 'LIKE', "%$keyword%")
+                    ->orWhere('alamat', 'LIKE', "%$keyword%")
+                    ->orWhere('kelurahan', 'LIKE', "%$keyword%")
+                    ->orWhere('contact_person', 'LIKE', "%$keyword%")
+                    ->orWhere('jenis_kost', 'LIKE', "%$keyword%")
+                    ->orWhere('harga', 'LIKE', "%$keyword%")
+                    ->orWhere('lokasi_pemondokan', 'LIKE', "%$keyword%")
+                    ->orWhere('jumlah_kamar', 'LIKE', "%$keyword%")
+                    ->orWhere('kamar_tersedia', 'LIKE', "%$keyword%");
+            });
+        }
+        
+        $items = $query->get();
         return view('pages.pemondokan', compact('items'));
     }
 
@@ -86,9 +132,13 @@ class KostController extends Controller
     // ===============================
     public function search(Request $request)
     {
+        $user = Auth::user();
         $keyword = $request->keyword;
-
         $query = Kost::with(['images', 'fasilitas']);
+
+        if ($user->role !== 'admin') {
+            $query->where('user_id', $user->id);
+        }
 
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
@@ -137,9 +187,13 @@ class KostController extends Controller
     // Cetak Laporan
     public function cetakLaporan(Request $request)
     {
+        $user = Auth::user();
         $keyword = $request->keyword;
-
         $query = Kost::with(['images', 'fasilitas']);
+
+        if ($user->role !== 'admin') {
+            $query->where('user_id', $user->id);
+        }
 
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
@@ -212,6 +266,7 @@ class KostController extends Controller
             'contact_person' => 'required',
             'nib' => 'required',
             'jenis_kost' => 'required',
+            'type_kamar' => 'nullable',
             'jumlah_kamar' => 'required|integer',
             'harga' => 'required|integer',
             'lokasi_pemondokan' => 'nullable'
@@ -221,6 +276,9 @@ class KostController extends Controller
         $user = Auth::user();
 
         // SIMPAN DATA KOST
+        $nibValue = $request->nib;
+        $statusIzin = (!empty($nibValue) && $nibValue !== '-') ? 'berizin' : 'belum_berizin';
+
         $kost = Kost::create([
             'user_id'           => $user->id,
             'nama_kost'         => $request->nama_kost,
@@ -231,10 +289,18 @@ class KostController extends Controller
             'contact_person'    => $request->contact_person,
             'nib'               => $request->nib,
             'jenis_kost'        => $request->jenis_kost,
+            'type_kamar'        => ($request->type_kamar === '-' || empty($request->type_kamar)) ? null : $request->type_kamar,
             'jumlah_kamar'      => $request->jumlah_kamar,
             'harga'             => $request->harga,
             'lokasi_pemondokan' => $request->lokasi_pemondokan,
+            'peraturan_kost'    => $request->peraturan_kost,
+            'nama_bank'         => $request->nama_bank,
+            'no_rekening'       => $request->no_rekening,
+            'status_izin'       => $statusIzin,
         ]);
+
+        // Inisialisasi kamar_tersedia
+        $kost->syncKamarTersedia();
 
         // ===========================
         // SIMPAN FASILITAS
@@ -265,6 +331,9 @@ class KostController extends Controller
         foreach ($fasilitasKeys as $key) {
             $dataFasilitas[$key] = $request->has($key);
         }
+
+        // Simpan fasilitas custom
+        $dataFasilitas['fasilitas_custom'] = $request->fasilitas_custom;
 
         KostFasilitas::create($dataFasilitas);
 
@@ -299,16 +368,33 @@ class KostController extends Controller
 
     public function edit($id)
     {
-        $kost = Kost::with('images', 'fasilitas')->findOrFail($id);
+        $user = Auth::user();
+        $query = Kost::with('images', 'fasilitas');
+        
+        if ($user->role !== 'admin') {
+            $query->where('user_id', $user->id);
+        }
+
+        $kost = $query->findOrFail($id);
         return view('admin.kost.edit', compact('kost'));
     }
 
 
     public function update(Request $request, $id)
     {
-        $kost = Kost::findOrFail($id);
+        $user = Auth::user();
+        $query = Kost::query();
 
-        $kost->update([
+        if ($user->role !== 'admin') {
+            $query->where('user_id', $user->id);
+        }
+
+        $kost = $query->findOrFail($id);
+
+        $nibValue = $request->nib;
+        $statusIzin = (!empty($nibValue) && $nibValue !== '-') ? 'berizin' : 'belum_berizin';
+
+        $updateData = [
             'nama_kost'         => $request->nama_kost,
             'nama_pemilik'      => $request->nama_pemilik,
             'nik_pemilik'       => $request->nik_pemilik,
@@ -317,10 +403,20 @@ class KostController extends Controller
             'contact_person'    => $request->contact_person,
             'nib'               => $request->nib,
             'jenis_kost'        => $request->jenis_kost,
+            'type_kamar'        => ($request->type_kamar === '-' || empty($request->type_kamar)) ? null : $request->type_kamar,
             'jumlah_kamar'      => $request->jumlah_kamar,
             'harga'             => $request->harga,
             'lokasi_pemondokan' => $request->lokasi_pemondokan,
-        ]);
+            'peraturan_kost'    => $request->peraturan_kost,
+            'nama_bank'         => $request->nama_bank,
+            'no_rekening'       => $request->no_rekening,
+            'status_izin'       => $statusIzin,
+        ];
+
+        $kost->update($updateData);
+
+        // Berikan kamar_tersedia nilai awal jika baru atau update sync jika jumlah_kamar berubah
+        $kost->syncKamarTersedia();
 
         if ($kost->fasilitas) {
 
@@ -350,6 +446,9 @@ class KostController extends Controller
             foreach ($fasilitasKeys as $key) {
                 $dataUpdate[$key] = $request->has($key);
             }
+
+            // Update fasilitas custom
+            $dataUpdate['fasilitas_custom'] = $request->fasilitas_custom;
 
             $kost->fasilitas->update($dataUpdate);
         }
@@ -384,8 +483,14 @@ class KostController extends Controller
 
     public function showKost($id)
     {
-        // Ambil data kost beserta fasilitas dan images
-        $kost = Kost::with(['fasilitas', 'images', 'user'])->findOrFail($id);
+        $user = Auth::user();
+        $query = Kost::with(['fasilitas', 'images', 'user']);
+
+        if ($user->role !== 'admin') {
+            $query->where('user_id', $user->id);
+        }
+
+        $kost = $query->findOrFail($id);
 
         return view('admin.kost.show', compact('kost'));
     }
@@ -394,7 +499,14 @@ class KostController extends Controller
 
     public function destroy($id)
     {
-        $kost = Kost::findOrFail($id);
+        $user = Auth::user();
+        $query = Kost::query();
+
+        if ($user->role !== 'admin') {
+            $query->where('user_id', $user->id);
+        }
+
+        $kost = $query->findOrFail($id);
 
         // Hapus gambar
         foreach ($kost->images as $img) {

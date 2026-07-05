@@ -58,12 +58,22 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label class="form-label">Jenis Kost</label>
                             <select name="jenis_kost" class="form-control" required>
                                 <option value="putra">Putra</option>
                                 <option value="putri">Putri</option>
                                 <option value="campur">Keluarga</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Type Kamar (Opsional)</label>
+                            <select name="type_kamar" class="form-control">
+                                <option value="-">-</option>
+                                <option value="Tipe A (Standar)">Tipe A (Standar)</option>
+                                <option value="Tipe B (Menengah)">Tipe B (Menengah)</option>
+                                <option value="Tipe C (VIP)">Tipe C (VIP)</option>
                             </select>
                         </div>
 
@@ -78,6 +88,18 @@
                         </div>
                     </div>
 
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nama Bank Pemilik</label>
+                            <input type="text" name="nama_bank" class="form-control" placeholder="Contoh: BCA, BNI, BRI, Mandiri">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">No. Rekening Pemilik</label>
+                            <input type="text" name="no_rekening" class="form-control" placeholder="Contoh: 1234567890">
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">Lokasi Pemondokan</label>
                         <select name="lokasi_pemondokan" class="form-control">
@@ -86,12 +108,23 @@
                         </select>
                     </div>
 
+                    {{-- ================= TAMBAH FASILITAS CUSTOM ================= --}}
+                    <div class="mb-3">
+                        <label class="form-label">Tambah Fasilitas Lainnya (Opsional)</label>
+                        <div class="input-group">
+                            <input type="text" id="customFasilitasInput" class="form-control" placeholder="Contoh: Parkir Motor Luas, Kamar Mandi Dalam">
+                            <button type="button" class="btn btn-outline-primary" id="addCustomFasilitas">
+                                <i class="fas fa-plus"></i> Tambah Fasilitas
+                            </button>
+                        </div>
+                    </div>
+
                     <hr>
 
                     {{-- ================= FASILITAS ================= --}}
                     <h6 class="mb-3"><strong>Fasilitas Kost</strong></h6>
 
-                    <div class="row">
+                    <div class="row" id="fasilitasContainer">
                         @php
                         $fasilitas = [
                         'lahan_parkir'=>'Lahan Parkir','pagar'=>'Pagar','cctv'=>'CCTV',
@@ -114,6 +147,55 @@
                             </div>
                         </div>
                         @endforeach
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const addBtn = document.getElementById('addCustomFasilitas');
+                            const input = document.getElementById('customFasilitasInput');
+                            const container = document.getElementById('fasilitasContainer');
+
+                            addBtn.addEventListener('click', function() {
+                                const val = input.value.trim();
+                                if (val) {
+                                    const id = 'custom_' + Date.now();
+                                    const html = `
+                                        <div class="col-md-3 col-sm-6 mb-2 custom-fasilitas-item">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="fasilitas_custom[]" value="${val}" id="${id}" checked>
+                                                <label class="form-check-label" for="${id}">
+                                                    ${val}
+                                                </label>
+                                                <button type="button" class="btn btn-sm text-danger remove-custom-fasilitas" style="padding: 0 5px;">
+                                                    <i class="fas fa-times-circle"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `;
+                                    container.insertAdjacentHTML('beforeend', html);
+                                    input.value = '';
+                                }
+                            });
+
+                            // Handle remove button
+                            container.addEventListener('click', function(e) {
+                                if (e.target.classList.contains('remove-custom-fasilitas') || e.target.closest('.remove-custom-fasilitas')) {
+                                    const item = e.target.closest('.custom-fasilitas-item');
+                                    if (item) {
+                                        item.remove();
+                                    }
+                                }
+                            });
+                        });
+                    </script>
+
+                    <hr>
+
+                    {{-- ================= PERATURAN KOST ================= --}}
+                    <h6 class="mb-3"><strong>Peraturan Kost</strong></h6>
+                    <div class="mb-3">
+                        <label class="form-label">Tuliskan peraturan kost (Satu baris untuk satu aturan)</label>
+                        <textarea name="peraturan_kost" class="form-control" rows="4" placeholder="1. Menjaga Kebersihan&#10;2. Dilarang Merokok di Kamar&#10;3. Tidak Membawa Hewan Peliharaan"></textarea>
                     </div>
 
                     <hr>

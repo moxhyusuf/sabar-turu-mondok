@@ -10,6 +10,7 @@ class AlurPendaftaranSeeder extends Seeder
     public function run(): void
     {
         AlurPendaftaran::create([
+            'title' => 'Alur Pendaftaran Rumah Pemondokan',
             'img' => 'alur_pendaftaran/step1.png',
         ]);
     }

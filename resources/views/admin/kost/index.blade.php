@@ -63,7 +63,7 @@
                                 <th>Pemilik</th>
                                 <th>Kontak</th>
                                 <th>Alamat</th>
-                                <th>Jumlah Kamar</th>
+                                <th>Sisa / Total</th>
                                 <th>NIB</th>
                                 <th class="text-center">Action</th>
                             </tr>
@@ -112,7 +112,7 @@
 
                                 {{-- JUMLAH KAMAR --}}
                                 <td class="text-center">
-                                    {{ $kost->jumlah_kamar }}
+                                    {{ $kost->kamar_tersedia }} / {{ $kost->jumlah_kamar }}
                                 </td>
 
                                 {{-- NIB --}}
@@ -172,7 +172,7 @@
                                 <th>Kontak</th>
                                 <th>Alamat</th>
                                 <th>Jenis</th>
-                                <th>Kamar</th>
+                                <th>Sisa / Total</th>
                                 <th>Harga</th>
                                 <th>Fasilitas</th>
                                 <th class="text-center">Action</th>
@@ -215,7 +215,9 @@
 
                                 <td>{{ ucfirst($kost->jenis_kost) }}</td>
 
-                                <td>{{ $kost->jumlah_kamar }}</td>
+                                <td class="text-center">
+                                    {{ $kost->kamar_tersedia }} / {{ $kost->jumlah_kamar }}
+                                </td>
                                 <td>{{ $kost->harga }}</td>
 
                                 {{-- FASILITAS --}}

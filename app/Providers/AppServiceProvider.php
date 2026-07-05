@@ -19,6 +19,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\View::composer('layouts_user.app', function ($view) {
+            $items = \App\Models\Kost::with('images')
+                ->latest()
+                ->take(6)
+                ->get();
+
+            $view->with('items', $items);
+        });
     }
 }

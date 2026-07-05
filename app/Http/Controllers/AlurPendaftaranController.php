@@ -8,113 +8,88 @@ use Illuminate\Support\Facades\Storage;
 
 class AlurPendaftaranController extends Controller
 {
-    // =========================
-    // HALAMAN ADMIN - INDEX
-    // =========================
+    // ==========================================
+    // INDEX (Renders the single Edit page)
+    // ==========================================
     public function index()
     {
-        $data = AlurPendaftaran::all();
-        return view('admin.alur_pendaftaran.index', compact('data'));
+        $alurPemondokan = AlurPendaftaran::firstOrCreate(
+            ['id' => 1],
+            ['title' => 'Alur Pendaftaran Rumah Pemondokan', 'img' => '']
+        );
+
+        $alurKos = AlurPendaftaran::firstOrCreate(
+            ['id' => 2],
+            ['title' => 'Alur Penyewaan Kos', 'img' => '']
+        );
+
+        return view('admin.alur_pendaftaran.edit', compact('alurPemondokan', 'alurKos'));
     }
 
-    // =========================
-    // HALAMAN PUBLIC (USER)
-    // =========================
+    // ==========================================
+    // PUBLIC ALUR (Renders public user page)
+    // ==========================================
     public function publicAlur()
     {
-        $data = AlurPendaftaran::all();
+        $data = AlurPendaftaran::orderBy('id', 'asc')->get();
         return view('pages.alur', compact('data'));
     }
 
-    // =========================
-    // CREATE
-    // =========================
-    public function create()
-    {
-        return view('admin.alur_pendaftaran.create');
-    }
-
-    // =========================
-    // STORE
-    // =========================
-    public function store(Request $request)
+    // ==========================================
+    // UPDATE ALL (Handles Edit Page Form Submission)
+    // ==========================================
+    public function updateAll(Request $request)
     {
         $request->validate([
-            'img' => 'required|image|max:2048',
+            'img_pemondokan' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'img_kos' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
-        $img = null;
+        $pemondokan = AlurPendaftaran::firstOrCreate(
+            ['id' => 1],
+            ['title' => 'Alur Pendaftaran Rumah Pemondokan', 'img' => '']
+        );
 
-        if ($request->hasFile('img')) {
-            $img = $request->file('img')->store('alur_pendaftaran', 'public');
-        }
+        $kos = AlurPendaftaran::firstOrCreate(
+            ['id' => 2],
+            ['title' => 'Alur Penyewaan Kos', 'img' => '']
+        );
 
-        AlurPendaftaran::create([
-            'img' => $img,
-        ]);
+        // Keep titles explicitly synced to match label
+        $pemondokan->update(['title' => 'Alur Pendaftaran Rumah Pemondokan']);
+        $kos->update(['title' => 'Alur Penyewaan Kos']);
 
-        return redirect()->route('alur_pendaftaran.index')
-            ->with('success', 'Data berhasil ditambahkan');
-    }
-
-    // =========================
-    // EDIT
-    // =========================
-    public function edit($id)
-    {
-        $data = AlurPendaftaran::findOrFail($id);
-        return view('admin.alur_pendaftaran.edit', compact('data'));
-    }
-
-    // =========================
-    // UPDATE
-    // =========================
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'img' => 'nullable|image|max:2048',
-        ]);
-
-        $data = AlurPendaftaran::findOrFail($id);
-
-        $img = $data->img;
-
-        // Cek apakah ada gambar baru
-        if ($request->hasFile('img')) {
-
-            // Hapus gambar lama
-            if ($data->img) {
-                Storage::disk('public')->delete($data->img);
+        // 1. Handle Pemondokan Image
+        if ($request->hasFile('img_pemondokan')) {
+            // Delete old file
+            if ($pemondokan->img) {
+                Storage::disk('public')->delete($pemondokan->img);
             }
-
-            // Upload gambar baru
-            $img = $request->file('img')->store('alur_pendaftaran', 'public');
+            $path = $request->file('img_pemondokan')->store('alur_pendaftaran', 'public');
+            $pemondokan->update(['img' => $path]);
+        } elseif ($request->has('remove_pemondokan') && $request->remove_pemondokan == '1') {
+            if ($pemondokan->img) {
+                Storage::disk('public')->delete($pemondokan->img);
+            }
+            $pemondokan->update(['img' => '']);
         }
 
-        $data->update([
-            'img' => $img,
-        ]);
-
-        return redirect()->route('alur_pendaftaran.index')
-            ->with('success', 'Data berhasil diperbarui');
-    }
-
-    // =========================
-    // DELETE
-    // =========================
-    public function destroy($id)
-    {
-        $data = AlurPendaftaran::findOrFail($id);
-
-        // Hapus gambar dari storage
-        if ($data->img) {
-            Storage::disk('public')->delete($data->img);
+        // 2. Handle Kos Image
+        if ($request->hasFile('img_kos')) {
+            // Delete old file
+            if ($kos->img) {
+                Storage::disk('public')->delete($kos->img);
+            }
+            $path = $request->file('img_kos')->store('alur_pendaftaran', 'public');
+            $kos->update(['img' => $path]);
+        } elseif ($request->has('remove_kos') && $request->remove_kos == '1') {
+            if ($kos->img) {
+                Storage::disk('public')->delete($kos->img);
+            }
+            $kos->update(['img' => '']);
         }
 
-        // Hapus data
-        $data->delete();
-
         return redirect()->route('alur_pendaftaran.index')
-            ->with('success', 'Data berhasil dihapus');
+            ->with('success', 'Alur pendaftaran berhasil diperbarui.');
     }
 }

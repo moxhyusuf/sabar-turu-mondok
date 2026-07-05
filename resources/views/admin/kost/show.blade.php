@@ -45,6 +45,10 @@
                                 <td>{{ $kost->jumlah_kamar }}</td>
                             </tr>
                             <tr>
+                                <th>Sisa Kamar</th>
+                                <td>{{ $kost->kamar_tersedia }}</td>
+                            </tr>
+                            <tr>
                                 <th>Harga</th>
                                 <td>Rp {{ number_format($kost->harga,0,',','.') }}</td>
                             </tr>
@@ -58,7 +62,6 @@
                     </table>
                 </div>
 
-                {{-- Fasilitas --}}
                 {{-- Fasilitas --}}
                 <div class="col-md-6">
                     <h5>Fasilitas</h5>
@@ -90,6 +93,13 @@
                         @if($f->mesin_cuci) <li>• Mesin Cuci</li> @endif
                         @if($f->r_jemur) <li>• Ruang Jemur</li> @endif
                         @if($f->dapur) <li>• Dapur</li> @endif
+
+                        {{-- Fasilitas Custom --}}
+                        @if($kost->fasilitas->fasilitas_custom)
+                            @foreach($kost->fasilitas->fasilitas_custom as $custom)
+                                <li class="facility-item">• {{ $custom }}</li>
+                            @endforeach
+                        @endif
 
                     </ul>
                 </div>

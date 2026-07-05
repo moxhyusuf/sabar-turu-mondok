@@ -62,29 +62,39 @@
             <div class="container">
 
                 <div class="content-grid">
-                    <div class="row g-6 align-items-stretch">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10">
 
-                        <div class="col-lg-12">
-                            <div class="image-showcase">
-                                <div class="main-image text-center">
-
-                                    @if(isset($data) && $data->count() > 0)
+                            @if(isset($data) && $data->count() > 0)
+                                <div class="d-flex flex-column" style="gap: 40px;">
                                     @foreach($data as $item)
-                                    <img src="{{ asset('storage/' . $item->img) }}"
-                                        alt="Alur Pendaftaran"
-                                        class="img-fluid rounded-3 mb-3">
+                                        <div class="alur-item">
+                                            <h3 class="fw-bold mb-3" style="color: #2c3e50; font-family: 'Poppins', sans-serif;">
+                                                {{ $item->title }}
+                                            </h3>
+                                            @if($item->img)
+                                                <img src="{{ asset('storage/' . $item->img) }}"
+                                                     alt="{{ $item->title }}"
+                                                     class="img-fluid w-100"
+                                                     style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block;">
+                                            @else
+                                                <div class="text-center py-5 bg-light rounded-3 text-muted">
+                                                    Tidak ada gambar alur
+                                                </div>
+                                            @endif
+                                        </div>
                                     @endforeach
-                                    @else
+                                </div>
+                            @else
+                                <div class="text-center">
                                     <img src="/assets/img/prototype.jpg"
                                         alt="Default Image"
-                                        class="img-fluid rounded-3">
-                                    @endif
-
-
+                                        class="img-fluid rounded-3" style="max-width: 500px;">
+                                    <p class="text-muted mt-3">Alur pendaftaran belum tersedia.</p>
                                 </div>
-                            </div>
-                        </div>
+                            @endif
 
+                        </div>
                     </div>
                 </div>
 

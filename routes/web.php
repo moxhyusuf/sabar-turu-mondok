@@ -8,6 +8,11 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AboutKamiController;
 use App\Http\Controllers\AlurPendaftaranController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\TransaksiController;
+use App\Http\Controllers\BookingUserController;
+use App\Http\Controllers\TransaksiUserController;
+use App\Http\Controllers\ReportController;
 
 
 
@@ -39,9 +44,52 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 //milik tampilan admin
 
+// Route melihat form booking (Bisa diakses publik)
+Route::get('/booking/{id}', [BookingUserController::class, 'create'])->name('user.booking.create');
+Route::get('/booking/identity/form', [BookingUserController::class, 'identityForm'])->name('user.booking.identity');
+Route::post('/booking', [BookingUserController::class, 'store'])->name('user.booking.store');
+
+Route::get('/cek-booking', function () {
+    return view('pages.cek_booking');
+})->name('guest.cek_booking');
+Route::post('/cek-booking', function (\Illuminate\Http\Request $request) {
+    $request->validate(['identifier' => 'required|string']);
+    return redirect()->route('guest.transaksi.show', $request->identifier);
+})->name('guest.cek_booking.process');
+
+// Route Guest Transaksi
+Route::get('/transaksi/guest/{identifier}', [TransaksiUserController::class, 'guestShow'])->name('guest.transaksi.show');
+Route::post('/transaksi/guest/{kode_booking}/upload', [TransaksiUserController::class, 'guestUpload'])->name('guest.transaksi.upload');
+Route::get('/transaksi/{id}/struk', [TransaksiUserController::class, 'cetakStruk'])->name('transaksi.struk');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+    // Routes admin/pemilik dekost (Tampilan)
+    Route::get('/pemilik_dekost/booking', [BookingController::class, 'index'])->name('pemilik_dekost.booking.index');
+    Route::get('/pemilik_dekost/transaksi', [TransaksiController::class, 'index'])->name('pemilik_dekost.transaksi.index');
+    
+    // Route Auth User Transaksi
+    Route::get('/transaksi', [TransaksiUserController::class, 'index'])->name('user.transaksi.index');
+    Route::post('/transaksi/{id}/upload', [TransaksiUserController::class, 'uploadBukti'])->name('user.transaksi.upload');
+
+    // Route Admin Verification
+    Route::delete('/pemilik_dekost/booking/{id}', [BookingController::class, 'destroy'])->name('pemilik_dekost.booking.destroy');
+    Route::post('/pemilik_dekost/booking/{id}/selesai', [BookingController::class, 'selesai'])->name('pemilik_dekost.booking.selesai');
+    
+    Route::post('/pemilik_dekost/transaksi/{id}/verify/{action}', [TransaksiController::class, 'verifyPayment'])->name('pemilik_dekost.transaksi.verify');
+    Route::get('/pemilik_dekost/transaksi/create', [TransaksiController::class, 'create'])->name('pemilik_dekost.transaksi.create');
+    Route::post('/pemilik_dekost/transaksi/store', [TransaksiController::class, 'storeManual'])->name('pemilik_dekost.transaksi.store');
+
+    // Admin Reports
+    Route::get('/admin/reports', [ReportController::class, 'index'])->name('admin.reports.index');
+    Route::get('/admin/reports/export/pdf', [ReportController::class, 'exportPdf'])->name('admin.reports.export.pdf');
+    Route::get('/admin/reports/export/excel', [ReportController::class, 'exportExcel'])->name('admin.reports.export.excel');
+
+    // Owner Reports
+    Route::get('/pemilik_dekost/reports', [ReportController::class, 'ownerIndex'])->name('pemilik_dekost.reports.index');
+    Route::get('/pemilik_dekost/reports/export/pdf', [ReportController::class, 'ownerExportPdf'])->name('pemilik_dekost.reports.export.pdf');
+    Route::get('/pemilik_dekost/reports/export/excel', [ReportController::class, 'ownerExportExcel'])->name('pemilik_dekost.reports.export.excel');
 });
 
 
@@ -87,8 +135,8 @@ Route::put('/tentang_kami/{id}', [AboutKamiController::class, 'update'])->name('
 
 // Route untuk alur pendaftaran
 Route::get('/alur_pendaftaran', [AlurPendaftaranController::class, 'index'])->name('alur_pendaftaran.index');
-Route::get('/alur_pendaftaran/{id}/edit', [AlurPendaftaranController::class, 'edit'])->name('alur_pendaftaran.edit');
-Route::put('/alur_pendaftaran/{id}', [AlurPendaftaranController::class, 'update'])->name('alur_pendaftaran.update');
+Route::post('/alur_pendaftaran/update-all', [AlurPendaftaranController::class, 'updateAll'])->name('alur_pendaftaran.update_all');
 
 //barcode
+Route::get('/kost/{id}/report', [KostController::class, 'showReport'])->name('kost.report');
 Route::get('/kost/{id}/barcode', [KostController::class, 'printBarcode'])->name('barcode.kost');

@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class AlurPendaftaran extends Model
 {
-    protected $fillable = ['img'];
+    protected $fillable = ['title', 'img'];
 }

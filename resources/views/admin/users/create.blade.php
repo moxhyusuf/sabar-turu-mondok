@@ -43,8 +43,7 @@
                                 <select name="role" class="form-control" required>
                                     <option value="">-- Pilih Role --</option>
                                     <option value="admin">Admin</option>
-                                    <option value="perpajakan">Perpajakan</option>
-                                    <option value="perizinan">Perizinan</option>
+
                                 </select>
                             </div>
 

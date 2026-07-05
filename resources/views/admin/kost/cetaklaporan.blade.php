@@ -150,7 +150,7 @@
                     <th>Pemilik</th>
                     <th>Kontak</th>
                     <th>Alamat</th>
-                    <th>Jumlah Kamar</th>
+                    <th>Sisa / Total</th>
                     <th>NIB</th>
 
                 </tr>
@@ -191,7 +191,7 @@
 
                     {{-- JUMLAH KAMAR --}}
                     <td class="text-center">
-                        {{ $item->jumlah_kamar }}
+                        {{ $item->kamar_tersedia }} / {{ $item->jumlah_kamar }}
                     </td>
 
                     {{-- NIB --}}

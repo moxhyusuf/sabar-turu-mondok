@@ -66,6 +66,17 @@
             </div><!-- End Section Title -->
 
             <div class="container">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <form action="{{ url('/pemondokan') }}" method="GET" class="d-flex shadow-sm rounded">
+                            <input type="text" name="keyword" class="form-control me-2" placeholder="Cari kos berdasarkan nama, wilayah, harga, dll..." value="{{ request('keyword') }}">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Cari</button>
+                            @if(request('keyword'))
+                                <a href="{{ url('/pemondokan') }}" class="btn btn-secondary ms-2">Reset</a>
+                            @endif
+                        </form>
+                    </div>
+                </div>
 
                 <div class="row gy-4">
 
@@ -94,6 +105,9 @@
                                 <h5 class="fw-bold mb-1">
                                     {{ $item->nama_kost }}
                                 </h5>
+                                @if(!empty($item->type_kamar) && $item->type_kamar != '-')
+                                    <h6 class="text-secondary mb-1" style="font-size: 0.9rem;">{{ $item->type_kamar }}</h6>
+                                @endif
 
                                 {{-- Kelurahan --}}
                                 <p class="text-primary fw-semibold mb-1">
@@ -114,13 +128,16 @@
                                 {{-- Total Kamar + Detail --}}
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="badge bg-info text-dark">
-                                        {{ $item->jumlah_kamar }} Kamar
+                                        {{ $item->kamar_tersedia }} Sisa Kamar
                                     </span>
 
                                     <a href="{{ route('detailkost', $item->id) }}"
                                         class="btn btn-outline-primary btn-sm">
                                         Detail <i class="bi bi-arrow-right"></i>
                                     </a>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{{ url('/booking/' . $item->id) }}" class="btn btn-primary w-100"><i class="bi bi-cart"></i> Pesan Kamar</a>
                                 </div>
 
                             </div>

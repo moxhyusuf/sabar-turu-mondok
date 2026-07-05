@@ -26,6 +26,11 @@ class KostFasilitas extends Model
         'mesin_cuci',
         'r_jemur',
         'dapur',
+        'fasilitas_custom',
+    ];
+
+    protected $casts = [
+        'fasilitas_custom' => 'array',
     ];
 
     public function kost()

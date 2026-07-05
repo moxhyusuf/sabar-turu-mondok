@@ -71,6 +71,14 @@
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.index') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-file-alt"></i>
+                            <p>Laporan</p>
+                        </a>
+                    </li>
+
+                    <!-- End Admin Block -->
                     @endif
 
                     {{-- Untuk PEMILIK KOST, PERPAJAKAN, PERIJINAN → Hanya menu Rumah Kost tampil --}}
@@ -82,6 +90,32 @@
                         </a>
                     </li>
                     @endif
+
+                    <!-- Pemilik Dekost Menu -->
+                    @if(auth()->user()->role === 'pemilik_dekost')
+                    <li class="nav-item">
+                        <a href="{{ route('pemilik_dekost.booking.index') }}" class="nav-link {{ request()->routeIs('pemilik_dekost.booking.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-calendar"></i>
+                            <p>Booking</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('pemilik_dekost.transaksi.index') }}" class="nav-link {{ request()->routeIs('pemilik_dekost.transaksi.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-money-bill"></i>
+                            <p>Transaksi</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('pemilik_dekost.reports.index') }}" class="nav-link {{ request()->routeIs('pemilik_dekost.reports.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-file-invoice"></i>
+                            <p>Laporan</p>
+                        </a>
+                    </li>
+                    @endif
+
+
 
                     {{-- Logout untuk semua role --}}
                     <li class="nav-item">
